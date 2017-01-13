@@ -286,14 +286,14 @@ def main():
                 if not fw_settings.queryService(service):
                     fw_settings.addService(service)
                     fw_zone.update(fw_settings)
-                    #fw.reload()
+                    fw.reload()
                     if module.check_mode:
                         module.exit_json(changed=True)
             elif desired_state == "disabled":
                 if fw_settings.queryService(service):
                     fw_settings.removeService(service)
                     fw_zone.update(fw_settings)
-                    #fw.reload()
+                    fw.reload()
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -302,14 +302,14 @@ def main():
                 if not fw_settings.queryPort(port, protocol):
                     fw_settings.addPort(port, protocol)
                     fw_zone.update(fw_settings)
-                    #fw.reload()
+                    fw.reload()
                     if module.check_mode:
                         module.exit_json(changed=True)
             elif desired_state == "disabled":
                 if fw_settings.queryPort(port, protocol):
                     fw_settings.removePort(port, protocol)
                     fw_zone.update(fw_settings)
-                    #fw.reload()
+                    fw.reload()
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -328,7 +328,7 @@ def main():
                     if not fw_settings.queryInterface(trust):
                         fw_settings.addInterface(trust)
                         fw_zone.update(fw_settings)
-                        #fw.reload()
+                        fw.reload()
                         if module.check_mode:
                             module.exit_json(changed=True)
             elif desired_state == "disabled":
@@ -339,7 +339,7 @@ def main():
                     if fw_settings.queryInterface(trust):
                         fw_settings.removeInterface(trust)
                         fw_zone.update(fw_settings)
-                        #fw.reload()
+                        fw.reload()
                         if module.check_mode:
                             module.exit_json(changed=True)
 
@@ -358,7 +358,7 @@ def main():
                     if not fw_settings.queryInterface(masq):
                         fw_settings.addInterface(masq)
                         fw_zone.update(fw_settings)
-                        #fw.reload()
+                        fw.reload()
                         if module.check_mode:
                             module.exit_json(changed=True)
             elif desired_state == "disabled":
@@ -369,7 +369,7 @@ def main():
                     if fw_settings.queryInterface(masq):
                         fw_settings.removeInterface(masq)
                         fw_zone.update(fw_settings)
-                        #fw.reload()
+                        fw.reload()
                         if module.check_mode:
                             module.exit_json(changed=True)
 
@@ -390,7 +390,7 @@ def main():
                     fw_settings.addForwardPort(_port, protocol,
                                                to_port, to_addr)
                     fw_zone.update(fw_settings)
-                    #fw.reload()
+                    fw.reload()
                     if module.check_mode:
                         module.exit_json(changed=True)
             elif desired_state == "disabled":
@@ -399,7 +399,7 @@ def main():
                     fw_settings.removeForwardPort(_port, protocol,
                                                   to_port, to_addr)
                     fw_zone.update(fw_settings)
-                    #fw.reload()
+                    fw.reload()
                     if module.check_mode:
                         module.exit_json(changed=True)
 
