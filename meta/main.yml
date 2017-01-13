@@ -1,0 +1,10 @@
+galaxy_info:
+  author: Thomas Woerner
+  description: firewall role for firewalld and system-config-firewall/lokkit
+  company: Red Hat
+
+  license: GPLv2+
+
+  min_ansible_version: 1.2
+
+  galaxy_tags: firewall
