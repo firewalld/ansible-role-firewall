@@ -268,6 +268,10 @@ def main():
     if HAS_FIREWALLD:
         fw = FirewallClient()
 
+        def exception_handler(exception_message):
+            module.fail_json(msg=exception_message)
+        fw.setExceptionHandler(exception_handler)
+
         if not fw.connected:
             module.fail_json(msg='firewalld service must be running')
 
