@@ -7,7 +7,7 @@
       - { trust_by_mac: '00:11:22:33:44:55', state: 'disabled' }
       - { masq: 'foo', state: 'disabled' }
       - { masq_by_mac: '00:11:22:33:44:55', state: 'disabled' }
-      - { forward_port: 'eth0,445/tcp,,1.2.3.4', state: 'disabled' }
-      - { forward_port_by_mac: '00:11:22:33:44:55,445/tcp,,1.2.3.4', state: 'disabled' }
+      - { forward_port: 'eth0;445/tcp;;1.2.3.4', state: 'disabled' }
+      - { forward_port_by_mac: '00:11:22:33:44:55;445/tcp;;1.2.3.4', state: 'disabled' }
   roles:
     - ansible-role-firewall

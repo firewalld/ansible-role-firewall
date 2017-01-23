@@ -5,7 +5,7 @@ DOCUMENTATION = '''
 ---
 module: firewall
 short_description: Module for firewall role
-requirements: python-firewall for firewalld or system-config-firewall/lokkit.
+requirements: python-firewall or system-config-firewall/lokkit.
 description:
   - Manage firewall with firewalld on RHEL-7 or system-config-firewall/lokkit on RHEL-6.
 author: "Thomas Woerner (twoerner@redhat.com)"
@@ -42,12 +42,12 @@ options:
     default: null
   forward_port:
     description:
-      - "Add or remove port forwarding for ports or port ranges over an interface. It needs to be in the format <interface>,<port>[-<port>]/<protocol>,[<to-port>],[<to-addr>]."
+      - "Add or remove port forwarding for ports or port ranges over an interface. It needs to be in the format <interface>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>]."
     required: false
     default: null
   forward_port_by_mac:
     description:
-      - "Add or remove port forwarding for ports or port ranges over an interface itentified ba a MAC address. It needs to be in the format <interface>,<port>[-<port>]/<protocol>,[<to-port>],[<to-addr>]."
+      - "Add or remove port forwarding for ports or port ranges over an interface itentified ba a MAC address. It needs to be in the format <mac-addr>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>]."
     required: false
     default: null
   state:
@@ -176,21 +176,17 @@ def get_device_for_mac(mac_addr):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            service=dict(required=False, default=None),
-            port=dict(required=False, default=None),
-            trust=dict(required=False, default=None),
-            trust_by_mac=dict(required=False, default=None),
-            masq=dict(required=False, default=None),
-            masq_by_mac=dict(required=False, default=None),
-            forward_port=dict(required=False, default=None),
-            forward_port_by_mac=dict(required=False, default=None),
+            service=dict(required=False, type='list', default=[]),
+            port=dict(required=False, type='list', default=[]),
+            trust=dict(required=False, type='list', default=[]),
+            trust_by_mac=dict(required=False, type='list', default=[]),
+            masq=dict(required=False, type='list', default=[]),
+            masq_by_mac=dict(required=False, type='list', default=[]),
+            forward_port=dict(required=False, type='list', default=[]),
+            forward_port_by_mac=dict(required=False, type='list', default=[]),
             state=dict(choices=['enabled', 'disabled'], required=True),
         ),
         required_one_of = (
-            [ 'service', 'port', 'trust', 'trust_by_mac', 'masq',
-              'masq_by_mac', 'forward_prot' ],
-        ),
-        mutually_exclusive = (
             [ 'service', 'port', 'trust', 'trust_by_mac', 'masq',
               'masq_by_mac', 'forward_prot' ],
         ),
@@ -201,55 +197,60 @@ def main():
         module.fail_json(msg='No firewall backend could be imported.')
 
     service = module.params['service']
-    if module.params['port'] is not None:
-        port, protocol = module.params['port'].split('/')
-        if protocol is None:
-            module.fail_json(msg='improper port format (missing protocol?)')
-    else:
-        port = None
+    port = [ ]
+    for port_proto in module.params['port']:
+        _port, _protocol = port_proto.split('/')
+        if _protocol is None:
+            module.fail_json(
+                msg='improper port format (missing protocol?)')
+        port.append((_port, _protocol))
     trust = module.params['trust']
-    trust_by_mac = module.params['trust_by_mac']
-    if trust_by_mac is not None:
-        interface = get_device_for_mac(trust_by_mac)
-        if interface is None:
-            module.fail_json(msg='MAC address not found')
+    trust_by_mac = [ ]
+    for item in module.params['trust_by_mac']:
+        _interface = get_device_for_mac(item)
+        if _interface is None:
+            module.fail_json(msg='MAC address not found %s' % item)
+        trust_by_mac.append(_interface)
     masq = module.params['masq']
-    masq_by_mac = module.params['masq_by_mac']
-    if masq_by_mac is not None:
-        interface = get_device_for_mac(masq_by_mac)
-        if interface is None:
-            module.fail_json(msg='MAC address not found')
-    if module.params['forward_port'] is not None:
-        args = module.params['forward_port'].split(",")
+    masq_by_mac = [ ]
+    for item in module.params['masq_by_mac']:
+        _interface = get_device_for_mac(item)
+        if _interface is None:
+            module.fail_json(msg='MAC address not found %s' % item)
+        masq_by_mac.append(_interface)
+    forward_port = [ ]
+    for item in module.params['forward_port']:
+        args = item.split(";")
         if len(args) != 4:
-            module.fail_json(msg='improper forward_port format')
-        interface, _port, to_port, to_addr = args
-        forward_port, protocol = _port.split('/')
-        if protocol is None:
+            module.fail_json(msg='improper forward_port format: %s' % item)
+        _interface, __port, _to_port, _to_addr = args
+        _port, _protocol = __port.split('/')
+        if _protocol is None:
             module.fail_json(msg='improper port format (missing protocol?)')
-        if to_port == "":
-            to_port = None
-        if to_addr == "":
-            to_addr = None
-    else:
-        forward_port = None
-    if module.params['forward_port_by_mac'] is not None:
-        args = module.params['forward_port_by_mac'].split(",")
+        if _to_port == "":
+            _to_port = None
+        if _to_addr == "":
+            _to_addr = None
+        forward_port.append((_interface, _port, _protocol, _to_port, _to_addr))
+
+    forward_port_by_mac = [ ]
+    for item in module.params['forward_port_by_mac']:
+        args = item.split(";")
         if len(args) != 4:
-            module.fail_json(msg='improper port format')
-        mac_addr, _port, to_port, to_addr = args
-        forward_port_by_mac, protocol = _port.split('/')
-        if protocol is None:
+            module.fail_json(msg='improper forward_port_by_mac format')
+        _mac_addr, __port, _to_port, _to_addr = args
+        _port, _protocol = __port.split('/')
+        if _protocol is None:
             module.fail_json(msg='improper port format (missing protocol?)')
-        if to_port == "":
-            to_port = None
-        if to_addr == "":
-            to_addr = None
-        interface = get_device_for_mac(mac_addr)
-        if interface is None:
-            module.fail_json(msg='MAC address not found')
-    else:
-        forward_port_by_mac = None
+        if _to_port == "":
+            _to_port = None
+        if _to_addr == "":
+            _to_addr = None
+        _interface = get_device_for_mac(_mac_addr)
+        if _interface is None:
+            module.fail_json(msg='MAC address not found %s' % _mac_addr)
+        forward_port_by_mac.append((_interface, _port, _protocol,
+                                    _to_port, _to_addr))
     desired_state = module.params['state']
 
     if HAS_FIREWALLD:
@@ -268,258 +269,293 @@ def main():
         fw_zone = fw.config().getZoneByName(default_zone)
         fw_settings = fw_zone.getSettings()
 
-        if service is not None:
-            if desired_state == "enabled":
-                if not fw_settings.queryService(service):
-                    fw_settings.addService(service)
-                    fw_zone.update(fw_settings)
-                    fw.reload()
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-            elif desired_state == "disabled":
-                if fw_settings.queryService(service):
-                    fw_settings.removeService(service)
-                    fw_zone.update(fw_settings)
-                    fw.reload()
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+        changed = False
+        changed_zones = { }
 
-        if port is not None:
+        # service
+        for item in service:
             if desired_state == "enabled":
-                if not fw_settings.queryPort(port, protocol):
-                    fw_settings.addPort(port, protocol)
-                    fw_zone.update(fw_settings)
-                    fw.reload()
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+                if not fw.queryService(default_zone, item):
+                    fw.addService(default_zone, item)
+                    changed = True
+                if not fw_settings.queryService(item):
+                    fw_settings.addService(item)
+                    changed = True
+                    changed_zones[fw_zone] = fw_settings
             elif desired_state == "disabled":
-                if fw_settings.queryPort(port, protocol):
-                    fw_settings.removePort(port, protocol)
-                    fw_zone.update(fw_settings)
-                    fw.reload()
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+                if fw.queryService(default_zone, item):
+                    fw.removeService(default_zone, item)
+                if fw_settings.queryService(item):
+                    fw_settings.removeService(item)
+                    changed = True
+                    changed_zones[fw_zone] = fw_settings
 
-        if trust is not None or trust_by_mac is not None:
-            if trust_by_mac is not None:
-                trust = interface
+        # port
+        for _port, _protocol in port:
+            if desired_state == "enabled":
+                if not fw.queryPort(default_zone, _port, _protocol):
+                    fw.addPort(default_zone, _port, _protocol)
+                    changed = True
+                if not fw_settings.queryPort(_port, _protocol):
+                    fw_settings.addPort(_port, _protocol)
+                    changed = True
+                    changed_zones[fw_zone] = fw_settings
+            elif desired_state == "disabled":
+                if fw.queryPort(default_zone, _port, _protocol):
+                    fw.removePort(default_zone, _port, _protocol)
+                    changed = True
+                if fw_settings.queryPort(_port, _protocol):
+                    fw_settings.removePort(_port, _protocol)
+                    changed = True
+                    changed_zones[fw_zone] = fw_settings
+
+        # trust, trust_by_mac
+        if len(trust) > 0 or len(trust_by_mac) > 0:
+            items = trust
+            if trust_by_mac:
+                items = trust_by_mac
 
             if default_zone != trusted_zone:
                 fw_zone = fw.config().getZoneByName(trusted_zone)
                 fw_settings = fw_zone.getSettings()
-            if desired_state == "enabled":
-                if try_set_zone_of_interface(trusted_zone, trust):
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-                else:
-                    if not fw_settings.queryInterface(trust):
-                        fw_settings.addInterface(trust)
-                        fw_zone.update(fw_settings)
-                        fw.reload()
-                        if module.check_mode:
-                            module.exit_json(changed=True)
-            elif desired_state == "disabled":
-                if try_set_zone_of_interface("", trust):
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-                else:
-                    if fw_settings.queryInterface(trust):
-                        fw_settings.removeInterface(trust)
-                        fw_zone.update(fw_settings)
-                        fw.reload()
-                        if module.check_mode:
-                            module.exit_json(changed=True)
 
-        if masq is not None or masq_by_mac is not None:
-            if masq_by_mac is not None:
-                masq = interface
+            for item in items:
+                if desired_state == "enabled":
+                    if try_set_zone_of_interface(trusted_zone, item):
+                        changed = True
+                    else:
+                        if not fw.queryInterface(trusted_zone, item):
+                            fw.changeZoneOfInterface(trusted_zone, item)
+                            changed = True
+                        if not fw_settings.queryInterface(item):
+                            fw_settings.addInterface(item)
+                            changed = True
+                            changed_zones[fw_zone] = fw_settings
+                elif desired_state == "disabled":
+                    if try_set_zone_of_interface("", item):
+                        if module.check_mode:
+                            module.exit_json(changed=True)
+                    else:
+                        if fw.queryInterface(trusted_zone, item):
+                            fw.removeInterface(trusted_zone, item)
+                            changed = True
+                        if fw_settings.queryInterface(item):
+                            fw_settings.removeInterface(item)
+                            changed = True
+                            changed_zones[fw_zone] = fw_settings
+
+        # masq, masq_by_mac
+        if len(masq) > 0 or len(masq_by_mac) > 0:
+            items = masq
+            if masq_by_mac:
+                items = masq_by_mac
 
             if default_zone != external_zone:
                 fw_zone = fw.config().getZoneByName(external_zone)
                 fw_settings = fw_zone.getSettings()
-            if desired_state == "enabled":
-                if try_set_zone_of_interface(external_zone, masq):
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-                else:
-                    if not fw_settings.queryInterface(masq):
-                        fw_settings.addInterface(masq)
-                        fw_zone.update(fw_settings)
-                        fw.reload()
-                        if module.check_mode:
-                            module.exit_json(changed=True)
-            elif desired_state == "disabled":
-                if try_set_zone_of_interface("", masq):
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-                else:
-                    if fw_settings.queryInterface(masq):
-                        fw_settings.removeInterface(masq)
-                        fw_zone.update(fw_settings)
-                        fw.reload()
-                        if module.check_mode:
-                            module.exit_json(changed=True)
 
-        if forward_port is not None or forward_port_by_mac is not None:
+            for item in items:
+                if desired_state == "enabled":
+                    if try_set_zone_of_interface(external_zone, item):
+                        changed = True
+                    else:
+                        if not fw.queryInterface(external_zone, item):
+                            fw.changeZoneOfInterface(external_zone, item)
+                            changed = True
+                        if not fw_settings.queryInterface(item):
+                            fw_settings.addInterface(item)
+                            changed = True
+                            changed_zones[fw_zone] = fw_settings
+                elif desired_state == "disabled":
+                    if try_set_zone_of_interface("", item):
+                        if module.check_mode:
+                            module.exit_json(changed=True)
+                    else:
+                        if fw.queryInterface(external_zone, item):
+                            fw.removeInterface(external_zone, item)
+                            changed = True
+                        if fw_settings.queryInterface(item):
+                            fw_settings.removeInterface(item)
+                            changed = True
+                            changed_zones[fw_zone] = fw_settings
+
+        # forward_port, forward_port_by_mac
+        if len(forward_port) > 0 or len(forward_port_by_mac) > 0:
+            items = forward_port
             if forward_port_by_mac is not None:
-                _port = forward_port_by_mac
-            else:
-                _port = forward_port
-            if interface != "":
-                _zone = fw.getZoneOfInterface(interface)
-                if _zone != "" and _zone != default_zone:
-                    fw_zone = fw.config.getZoneByName(_zone)
-                    fw_settings = fw_zone.getSettings()
+                items = forward_port_by_mac
 
-            if desired_state == "enabled":
-                if not fw_settings.queryForwardPort(_port, protocol,
-                                                    to_port, to_addr):
-                    fw_settings.addForwardPort(_port, protocol,
-                                               to_port, to_addr)
-                    fw_zone.update(fw_settings)
-                    fw.reload()
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-            elif desired_state == "disabled":
-                if fw_settings.queryForwardPort(_port, protocol,
-                                                to_port, to_addr):
-                    fw_settings.removeForwardPort(_port, protocol,
-                                                  to_port, to_addr)
-                    fw_zone.update(fw_settings)
-                    fw.reload()
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+            for _interface, _port, _protocol, _to_port, _to_addr in items:
+                if _interface != "":
+                    _zone = fw.getZoneOfInterface(_interface)
+                    if _zone != "" and _zone != default_zone:
+                        fw_zone = fw.config.getZoneByName(_zone)
+                        fw_settings = fw_zone.getSettings()
 
+                if desired_state == "enabled":
+                    if not fw.queryForwardPort(_zone, _port, protocol,
+                                               _to_port, _to_addr):
+                        fw.addForwardPort(_zone, _port, protocol,
+                                          _to_port, _to_addr)
+                        changed = True
+                    if not fw_settings.queryForwardPort(_port, protocol,
+                                                        _to_port, _to_addr):
+                        fw_settings.addForwardPort(_port, protocol,
+                                                   _to_port, _to_addr)
+                        changed = True
+                        changed_zones[fw_zone] = fw_settings
+                elif desired_state == "disabled":
+                    if fw.queryForwardPort(_zone, _port, protocol,
+                                               _to_port, _to_addr):
+                        fw.removeForwardPort(_zone, _port, protocol,
+                                             _to_port, _to_addr)
+                        changed = True
+                    if fw_settings.queryForwardPort(_port, protocol,
+                                                    _to_port, _to_addr):
+                        fw_settings.removeForwardPort(_port, protocol,
+                                                      _to_port, _to_addr)
+                        changed = True
+                        changed_zones[fw_zone] = fw_settings
+
+        # apply changes
+        if changed:
+            for _zone in changed_zones:
+                _zone.update(changed_zones[_zone])
+            if module.check_mode:
+                module.exit_json(changed=True)
 
     elif HAS_SYSTEM_CONFIG_FIREWALL:
-        (config, old_config, _) = fw_lokkit.loadConfig(args=[])
+        (config, old_config, _) = fw_lokkit.loadConfig(args=[ ],
+                                                       dbus_parser=True)
 
-        if service is not None:
+        changed = False
+
+        # service
+        for item in service:
             if config.services is None:
                 config.services = [ ]
-            if desired_state == "enabled":
-                if service not in config.services:
-                    config.services.append(service)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-            elif desired_state == "disabled":
-                if service in config.services:
-                    config.services.remove(service)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
 
-        if port is not None:
+            if desired_state == "enabled":
+                if item not in config.services:
+                    config.services.append(item)
+                    changed = True
+            elif desired_state == "disabled":
+                if item in config.services:
+                    config.services.remove(item)
+                    changed = True
+
+        # port
+        for _port, _protocol in port:
             if config.ports is None:
                 config.ports = [ ]
-            _range = getPortRange(port)
+
+            _range = getPortRange(_port)
             if _range < 0:
-                module.fail_json(msg='invalid port definition')
+                module.fail_json(msg='invalid port definition %s' % _port)
             elif _range is None:
                 module.fail_json(msg='port _range is not unique.')
             elif len(_range) == 2 and _range[0] >= _range[1]:
-                module.fail_json(msg='invalid port range')
-            port_proto = (_range, protocol)
+                module.fail_json(msg='invalid port range %s' % _port)
+            port_proto = (_range, _protocol)
             if desired_state == "enabled":
                 if port_proto not in config.ports:
                     config.ports.append(port_proto)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+                    changed = True
             elif desired_state == "disabled":
                 if port_proto in config.ports:
                     config.ports.remove(port_proto)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+                    changed = True
 
-        if trust is not None or trust_by_mac is not None:
+        # trust, trust_by_mac
+        if len(trust) > 0 or len(trust_by_mac) > 0:
             if config.trust is None:
                 config.trust = [ ]
 
-            if trust_by_mac is not None:
-                trust = interface
+            items = trust
+            if trust_by_mac:
+                items = trust_by_mac
 
-            if desired_state == "enabled":
-                if trust not in config.trust:
-                    config.trust.append(trust)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-            elif desired_state == "disabled":
-                if trust in config.trust:
-                    config.trust.remove(trust)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+            for item in items:
+                if desired_state == "enabled":
+                    if item not in config.trust:
+                        config.trust.append(item)
+                        changed = True
+                elif desired_state == "disabled":
+                    if item in config.trust:
+                        config.trust.remove(item)
+                        changed = True
 
-        if masq is not None or masq_by_mac is not None:
+        # masq, masq_by_mac
+        if len(masq) > 0 or len(masq_by_mac) > 0:
             if config.masq is None:
                 config.masq = [ ]
 
-            if masq_by_mac is not None:
-                masq = interface
+            items = masq
+            if masq_by_mac:
+                items = masq_by_mac
 
-            if desired_state == "enabled":
-                if masq not in config.masq:
-                    config.masq.append(masq)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-            elif desired_state == "disabled":
-                if masq in config.masq:
-                    config.masq.remove(masq)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+            for item in items:
+                if desired_state == "enabled":
+                    if item not in config.masq:
+                        config.masq.append(item)
+                        changed = True
+                elif desired_state == "disabled":
+                    if item in config.masq:
+                        config.masq.remove(item)
+                        changed = True
 
-        if forward_port is not None or forward_port_by_mac is not None:
+        # forward_port, forward_port_by_mac
+        if len(forward_port) > 0 or len(forward_port_by_mac) > 0:
             if config.forward_port is None:
                 config.forward_port = [ ]
 
+            items = forward_port
             if forward_port_by_mac is not None:
-                _port = forward_port_by_mac
-            else:
-                _port = forward_port
-            _range = getPortRange(_port)
-            if _range < 0:
-                module.fail_json(msg='invalid port definition')
-            elif _range is None:
-                module.fail_json(msg='port _range is not unique.')
-            elif len(_range) == 2 and _range[0] >= _range[1]:
-                module.fail_json(msg='invalid port range')
-            fwd_port = { "if": interface, "port": _range, "proto": protocol }
-            if to_port is not None:
-                _range = getPortRange(to_port)
+                items = forward_port_by_mac
+
+            for _interface, _port, _protocol, _to_port, _to_addr in items:
+                _range = getPortRange(_port)
                 if _range < 0:
-                    module.fail_json(msg='invalid port definition %s' % to_port)
+                    module.fail_json(msg='invalid port definition')
                 elif _range is None:
                     module.fail_json(msg='port _range is not unique.')
                 elif len(_range) == 2 and _range[0] >= _range[1]:
                     module.fail_json(msg='invalid port range')
-                fwd_port["toport"] = _range
-            if to_addr is not None:
-                fwd_port["toaddr"] = to_addr
+                fwd_port = { "if": _interface,
+                             "port": _range,
+                             "proto": _protocol }
+                if to_port is not None:
+                    _range = getPortRange(_to_port)
+                    if _range < 0:
+                        module.fail_json(msg='invalid port definition %s' % \
+                                         _to_port)
+                    elif _range is None:
+                        module.fail_json(msg='port _range is not unique.')
+                    elif len(_range) == 2 and _range[0] >= _range[1]:
+                        module.fail_json(msg='invalid port range')
+                    fwd_port["toport"] = _range
+                if to_addr is not None:
+                    fwd_port["toaddr"] = _to_addr
 
-            if desired_state == "enabled":
-                if fwd_port not in config.forward_port:
-                    config.forward_port.append(fwd_port)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
-            elif desired_state == "disabled":
-                if fwd_port in config.forward_port:
-                    config.forward_port.remove(fwd_port)
-                    fw_lokkit.updateFirewall(config, old_config)
-                    if module.check_mode:
-                        module.exit_json(changed=True)
+                if desired_state == "enabled":
+                    if fwd_port not in config.forward_port:
+                        config.forward_port.append(fwd_port)
+                        changed = True
+                elif desired_state == "disabled":
+                    if fwd_port in config.forward_port:
+                        config.forward_port.remove(fwd_port)
+                        changed = True
+
+        # apply changes
+        if changed:
+            fw_lokkit.updateFirewall(config, old_config)
+            if module.check_mode:
+                module.exit_json(changed=True)
 
     else:
         module.fail_json(msg='No firewalld and system-config-firewall')
 
-    msgs = [ ]
-    module.exit_json(changed=False, msg=', '.join(msgs))
+    module.exit_json(changed=False)
 
 #################################################
 # import module snippets
