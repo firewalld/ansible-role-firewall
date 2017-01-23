@@ -186,8 +186,19 @@ def main():
             forward_port_by_mac=dict(required=False, default=None),
             state=dict(choices=['enabled', 'disabled'], required=True),
         ),
+        required_one_of = (
+            [ 'service', 'port', 'trust', 'trust_by_mac', 'masq',
+              'masq_by_mac', 'forward_prot' ],
+        ),
+        mutually_exclusive = (
+            [ 'service', 'port', 'trust', 'trust_by_mac', 'masq',
+              'masq_by_mac', 'forward_prot' ],
+        ),
         supports_check_mode=True
     )
+
+    if not HAS_FIREWALLD and not HAS_SYSTEM_CONFIG_FIREWALL:
+        module.fail_json(msg='No firewall backend could be imported.')
 
     service = module.params['service']
     if module.params['port'] is not None:
@@ -240,30 +251,6 @@ def main():
     else:
         forward_port_by_mac = None
     desired_state = module.params['state']
-
-    modification_count = 0
-    if service is not None:
-        modification_count += 1
-    if port is not None:
-        modification_count += 1
-    if trust is not None:
-        modification_count += 1
-    if trust_by_mac is not None:
-        modification_count += 1
-    if masq is not None:
-        modification_count += 1
-    if masq_by_mac is not None:
-        modification_count += 1
-    if forward_port is not None:
-        modification_count += 1
-
-    if modification_count > 1:
-        module.fail_json(msg='can only operate on one of service, port, " + \
-        "trust, trust-by-mac, masq, masq-by-mac, forward_port or " + \
-        "forward_port_by_mac at once')
-
-    if not HAS_FIREWALLD and not HAS_SYSTEM_CONFIG_FIREWALL:
-        module.fail_json(msg='No firewall backend could be imported.')
 
     if HAS_FIREWALLD:
         fw = FirewallClient()
