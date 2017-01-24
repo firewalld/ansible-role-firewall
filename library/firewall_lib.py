@@ -323,7 +323,7 @@ def main():
         if len(trust) > 0 or len(trust_by_mac) > 0:
             items = trust
             if len(trust_by_mac) > 0:
-                items = items.extend(trust_by_mac)
+                items.extend(trust_by_mac)
 
             if default_zone != trusted_zone:
                 fw_zone = fw.config().getZoneByName(trusted_zone)
@@ -358,7 +358,7 @@ def main():
         if len(masq) > 0 or len(masq_by_mac) > 0:
             items = masq
             if len(masq_by_mac) > 0:
-                items = items.extend(masq_by_mac)
+                items.extend(masq_by_mac)
 
             if default_zone != external_zone:
                 fw_zone = fw.config().getZoneByName(external_zone)
@@ -393,7 +393,7 @@ def main():
         if len(forward_port) > 0 or len(forward_port_by_mac) > 0:
             items = forward_port
             if len(forward_port_by_mac) > 0:
-                items = items.extend(forward_port_by_mac)
+                items.extend(forward_port_by_mac)
 
             for _interface, _port, _protocol, _to_port, _to_addr in items:
                 if _interface != "":
@@ -483,7 +483,7 @@ def main():
 
             items = trust
             if len(trust_by_mac) > 0:
-                items = items.extend(trust_by_mac)
+                items.extend(trust_by_mac)
 
             for item in items:
                 if desired_state == "enabled":
@@ -502,7 +502,7 @@ def main():
 
             items = masq
             if len(masq_by_mac) > 0:
-                items = items.extend(masq_by_mac)
+                items.extend(masq_by_mac)
 
             for item in items:
                 if desired_state == "enabled":
@@ -521,7 +521,7 @@ def main():
 
             items = forward_port
             if len(forward_port_by_mac) > 0:
-                items = items.extend(forward_port_by_mac)
+                items.extend(forward_port_by_mac)
 
             for _interface, _port, _protocol, _to_port, _to_addr in items:
                 _range = getPortRange(_port)
