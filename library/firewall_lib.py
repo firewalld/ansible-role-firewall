@@ -399,7 +399,7 @@ def main():
                 if _interface != "":
                     _zone = fw.getZoneOfInterface(_interface)
                     if _zone != "" and _zone != default_zone:
-                        fw_zone = fw.config.getZoneByName(_zone)
+                        fw_zone = fw.config().getZoneByName(_zone)
                         fw_settings = fw_zone.getSettings()
 
                 if desired_state == "enabled":
