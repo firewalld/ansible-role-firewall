@@ -1,5 +1,5 @@
 - name: Configure firewall
-  firewall:
+  firewall_lib:
     service: "{{ item.service | default(omit) }}"
     port: "{{ item.port | default(omit)}}"
     trust: "{{ item.trust | default(omit)}}"
