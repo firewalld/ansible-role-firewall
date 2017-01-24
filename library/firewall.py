@@ -312,8 +312,8 @@ def main():
         # trust, trust_by_mac
         if len(trust) > 0 or len(trust_by_mac) > 0:
             items = trust
-            if trust_by_mac:
-                items = trust_by_mac
+            if len(trust_by_mac) > 0:
+                items = items.extend(trust_by_mac)
 
             if default_zone != trusted_zone:
                 fw_zone = fw.config().getZoneByName(trusted_zone)
@@ -347,8 +347,8 @@ def main():
         # masq, masq_by_mac
         if len(masq) > 0 or len(masq_by_mac) > 0:
             items = masq
-            if masq_by_mac:
-                items = masq_by_mac
+            if len(masq_by_mac) > 0:
+                items = items.extend(masq_by_mac)
 
             if default_zone != external_zone:
                 fw_zone = fw.config().getZoneByName(external_zone)
@@ -382,8 +382,8 @@ def main():
         # forward_port, forward_port_by_mac
         if len(forward_port) > 0 or len(forward_port_by_mac) > 0:
             items = forward_port
-            if forward_port_by_mac is not None:
-                items = forward_port_by_mac
+            if len(forward_port_by_mac) > 0:
+                items = items.extend(forward_port_by_mac)
 
             for _interface, _port, _protocol, _to_port, _to_addr in items:
                 if _interface != "":
@@ -393,26 +393,26 @@ def main():
                         fw_settings = fw_zone.getSettings()
 
                 if desired_state == "enabled":
-                    if not fw.queryForwardPort(_zone, _port, protocol,
+                    if not fw.queryForwardPort(_zone, _port, _protocol,
                                                _to_port, _to_addr):
-                        fw.addForwardPort(_zone, _port, protocol,
+                        fw.addForwardPort(_zone, _port, _protocol,
                                           _to_port, _to_addr)
                         changed = True
-                    if not fw_settings.queryForwardPort(_port, protocol,
+                    if not fw_settings.queryForwardPort(_port, _protocol,
                                                         _to_port, _to_addr):
-                        fw_settings.addForwardPort(_port, protocol,
+                        fw_settings.addForwardPort(_port, _protocol,
                                                    _to_port, _to_addr)
                         changed = True
                         changed_zones[fw_zone] = fw_settings
                 elif desired_state == "disabled":
-                    if fw.queryForwardPort(_zone, _port, protocol,
+                    if fw.queryForwardPort(_zone, _port, _protocol,
                                                _to_port, _to_addr):
-                        fw.removeForwardPort(_zone, _port, protocol,
+                        fw.removeForwardPort(_zone, _port, _protocol,
                                              _to_port, _to_addr)
                         changed = True
-                    if fw_settings.queryForwardPort(_port, protocol,
+                    if fw_settings.queryForwardPort(_port, _protocol,
                                                     _to_port, _to_addr):
-                        fw_settings.removeForwardPort(_port, protocol,
+                        fw_settings.removeForwardPort(_port, _protocol,
                                                       _to_port, _to_addr)
                         changed = True
                         changed_zones[fw_zone] = fw_settings
@@ -472,8 +472,8 @@ def main():
                 config.trust = [ ]
 
             items = trust
-            if trust_by_mac:
-                items = trust_by_mac
+            if len(trust_by_mac) > 0:
+                items = items.extend(trust_by_mac)
 
             for item in items:
                 if desired_state == "enabled":
@@ -491,8 +491,8 @@ def main():
                 config.masq = [ ]
 
             items = masq
-            if masq_by_mac:
-                items = masq_by_mac
+            if len(masq_by_mac) > 0:
+                items = items.extend(masq_by_mac)
 
             for item in items:
                 if desired_state == "enabled":
@@ -510,8 +510,8 @@ def main():
                 config.forward_port = [ ]
 
             items = forward_port
-            if forward_port_by_mac is not None:
-                items = forward_port_by_mac
+            if len(forward_port_by_mac) > 0:
+                items = items.extend(forward_port_by_mac)
 
             for _interface, _port, _protocol, _to_port, _to_addr in items:
                 _range = getPortRange(_port)
@@ -524,7 +524,7 @@ def main():
                 fwd_port = { "if": _interface,
                              "port": _range,
                              "proto": _protocol }
-                if to_port is not None:
+                if _to_port is not None:
                     _range = getPortRange(_to_port)
                     if _range < 0:
                         module.fail_json(msg='invalid port definition %s' % \
@@ -534,7 +534,7 @@ def main():
                     elif len(_range) == 2 and _range[0] >= _range[1]:
                         module.fail_json(msg='invalid port range')
                     fwd_port["toport"] = _range
-                if to_addr is not None:
+                if _to_addr is not None:
                     fwd_port["toaddr"] = _to_addr
 
                 if desired_state == "enabled":
