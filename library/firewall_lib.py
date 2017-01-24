@@ -66,6 +66,7 @@ try:
         from firewall.core.fw_nm import nm_is_imported, \
             nm_get_connection_of_interface, nm_get_zone_of_connection, \
             nm_set_zone_of_connection
+        from gi.repository import NM
         HAS_FIREWALLD_NM = True
     except ImportError:
         HAS_FIREWALLD_NM = False
@@ -150,6 +151,15 @@ class ifcfg(object):
 
 def get_device_for_mac(mac_addr):
     """Get device for the MAC address from ifcfg file"""
+
+    if HAS_FIREWALLD_NM and nm_is_imported:
+        client = NM.Client.new(None)
+        for nm_dev in client.get_devices():
+            iface = nm_dev.get_iface()
+            if iface == "lo":
+                continue
+            if nm_dev.get_hw_address().lower() == mac_addr.lower():
+                return iface
 
     IFCFGDIR = "/etc/sysconfig/network-scripts"
     # Return quickly if config.IFCFGDIR does not exist
