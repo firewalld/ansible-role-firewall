@@ -48,11 +48,13 @@ Usage
 
 $ git clone https://github.com/firewalld/ansible-role-firewall.git
 
-This configures the firewall
-$ ansible-playbook -k -i hostname, ansible-role-firewall/firewall_playbook1.yml
+This configures the firewall:
 
-This reverts the configuration from playbook1
-$ ansible-playbook -k -i hostname, ansible-role-firewall/firewall_playbook2.yml
+    $ ansible-playbook -k -i hostname, ansible-role-firewall/firewall_playbook1.yml
+
+This reverts the configuration from playbook1:
+
+    $ ansible-playbook -k -i hostname, ansible-role-firewall/firewall_playbook2.yml
 
 
 Variables
