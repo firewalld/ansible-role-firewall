@@ -58,13 +58,76 @@ $ ansible-playbook -k -i hostname, ansible-role-firewall/firewall_playbook2.yml
 Variables
 ---------
 
-### Examples
+These are the variables that can be passed to the role:
 
-- firewall: service=ssh state=enabled
-- firewall: port=444-445/tcp state=enabled
-- firewall: trust=eth2 state=enabled
-- firewall: trust_by_mac=00:11:22:33:44:55 state=enabled
-- firewall: masq=eth3 state=enabled
-- firewall: masq_by_mac=00:11:22:33:44:66 state=enabled
-- firewall: forward_port=eth3,80/tcp,,10.0.0.3 state=enabled
-- firewall: forward_port_by_mac=11:22:33:44:55:66,8080/tcp,81, state=enabled
+    firewall_setup_default_solution: false
+
+This turns off the installation and start of the default firewall solution for the specific Fedora or RHEL release. This is intended for users of system-config-firewall on RHEL-7 or Fedora releases.
+
+    service: 'ftp'
+    service: [ 'ftp', 'tftp' ]
+
+Name of a service or service list to add or remove inbound access to. The service needs to be defined in firewalld or system-config-firewall/lokkit configuration.
+
+    port: '443/tcp'
+    port: [ '443/tcp', '443/udp' ]
+
+Port or port range or a list of them to add or remove inbound access to. It needs to be in the format port=<port>[-<port>]/<protocol>.
+
+    trust: 'eth0'
+    trust: [ 'eth0', 'eth1' ]
+
+Interface to add or remove to the trusted interfaces.
+
+    trust_by_mac: "00:11:22:33:44:55"
+    trust_by_mac: [ "00:11:22:33:44:55", "00:11:22:33:44:56" ]
+
+Interface to add or remove to the trusted interfaces by MAC address or MAC address list. Each MAC address will automatically be mapped to the interface that is using this MAC address.
+
+    masq: 'eth2'
+    masq: [ 'eth2', 'eth3' ]
+
+Interface to add or remove to the interfaces that are masqueraded.
+
+    masq_by_mac: "11:22:33:44:55:66"
+    masq_by_mac: [ "11:22:33:44:55:66", "11:22:33:44:55:67", ]
+
+Interface to add or remove to the interfaces that are masqueraded by MAC address or MAC address list. Each MAC address will automatically be mapped to the interface that is using this MAC address.
+
+    forward_port: 'eth0;447/tcp;;1.2.3.4'
+    forward_port: [ 'eth0;447/tcp;;1.2.3.4', 'eth0;448/tcp;;1.2.3.5' ]
+
+Add or remove port forwarding for ports or port ranges over an interface. It needs to be in the format <interface>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>].
+
+    forward_port_by_mac: '00:11:22:33:44:55;447/tcp;;1.2.3.4'
+    forward_port_by_mac: [ '00:11:22:33:44:55;447/tcp;;1.2.3.4', '00:11:22:33:44:56;447/tcp;;1.2.3.4' ]
+
+"Add or remove port forwarding for ports or port ranges over an interface itentified ba a MAC address or MAC address list. It needs to be in the format <mac-addr>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>]. Each MAC address will automatically be mapped to the interface that is using this MAC address.
+
+    state: 'enabled' | 'disabled'
+
+Enable or disable the entry.
+
+### Example Playbook
+
+    - hosts: localhost
+      vars:
+	firewall:
+          - { service: [ 'tftp', 'ftp' ],
+              port: [ '443/tcp', '443/udp' ],
+              trust: [ 'eth0', 'eth1' ],
+              masq: [ 'eth2', 'eth3' ],
+              forward_port: [ 'eth2;447/tcp;;1.2.3.4',
+                              'eth2;448/tcp;;1.2.3.5' ],
+              state: 'enabled' }
+	  - { service: 'tftp', state: 'enabled' }
+	  - { port: '443/tcp', state: 'enabled' }
+	  - { trust: 'foo', state: 'enabled' }
+	  - { trust_by_mac: '00:11:22:33:44:55', state: 'enabled' }
+	  - { masq: 'foo2', state: 'enabled' }
+	  - { masq_by_mac: '00:11:22:33:44:55', state: 'enabled' }
+	  - { forward_port: 'eth0;445/tcp;;1.2.3.4', state: 'enabled' }
+	  - { forward_port_by_mac: '00:11:22:33:44:55;445/tcp;;1.2.3.4',
+              state: 'enabled' }
+      roles:
+	- ansible-role-firewall
