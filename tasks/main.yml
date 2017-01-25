@@ -1,3 +1,15 @@
+- include: firewalld.yml
+  when: >
+    firewall_setup_default_solution == true and
+    (ansible_distribution == 'Fedora' or
+     (ansible_distribution in ('CentOS', 'RedHat') and ansible_distribution_version|version_compare('>=', 7)))
+
+- name: Install system-config-firewall
+  package: name=system-config-firewall
+  when: >
+      firewall_setup_default_solution == true and
+      ansible_distribution in ('CentOS', 'RedHat') and ansible_distribution_version|version_compare('<', 7)
+
 - name: Configure firewall
   firewall_lib:
     service: "{{ item.service | default(omit) }}"
