@@ -112,7 +112,7 @@ Enable or disable the entry.
 
     - hosts: localhost
       vars:
-	firewall:
+        firewall:
           - { service: [ 'tftp', 'ftp' ],
               port: [ '443/tcp', '443/udp' ],
               trust: [ 'eth0', 'eth1' ],
@@ -120,14 +120,14 @@ Enable or disable the entry.
               forward_port: [ 'eth2;447/tcp;;1.2.3.4',
                               'eth2;448/tcp;;1.2.3.5' ],
               state: 'enabled' }
-	  - { service: 'tftp', state: 'enabled' }
-	  - { port: '443/tcp', state: 'enabled' }
-	  - { trust: 'foo', state: 'enabled' }
-	  - { trust_by_mac: '00:11:22:33:44:55', state: 'enabled' }
-	  - { masq: 'foo2', state: 'enabled' }
-	  - { masq_by_mac: '00:11:22:33:44:55', state: 'enabled' }
-	  - { forward_port: 'eth0;445/tcp;;1.2.3.4', state: 'enabled' }
-	  - { forward_port_by_mac: '00:11:22:33:44:55;445/tcp;;1.2.3.4',
+          - { service: 'tftp', state: 'enabled' }
+          - { port: '443/tcp', state: 'enabled' }
+          - { trust: 'foo', state: 'enabled' }
+          - { trust_by_mac: '00:11:22:33:44:55', state: 'enabled' }
+          - { masq: 'foo2', state: 'enabled' }
+          - { masq_by_mac: '00:11:22:33:44:55', state: 'enabled' }
+          - { forward_port: 'eth0;445/tcp;;1.2.3.4', state: 'enabled' }
+          - { forward_port_by_mac: '00:11:22:33:44:55;445/tcp;;1.2.3.4',
               state: 'enabled' }
       roles:
 	- ansible-role-firewall
