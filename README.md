@@ -130,4 +130,4 @@ Enable or disable the entry.
           - { forward_port_by_mac: '00:11:22:33:44:55;445/tcp;;1.2.3.4',
               state: 'enabled' }
       roles:
-          - ansible-role-firewall
+        - ansible-role-firewall
