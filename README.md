@@ -135,3 +135,15 @@ Enable or disable the entry.
         - ansible-role-firewall
 
 The block with several services, ports, etc. will be applied at once. If there is something wrong in the block it will fail as a whole.
+
+It is also possible to use the more common syntax:
+
+    - hosts: localhost
+      vars:
+        firewall:
+          service: 'tftp'
+          state: 'enabled'
+      roles:
+        - ansible-role-firewall
+
+To do only one change.
