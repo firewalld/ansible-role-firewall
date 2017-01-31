@@ -74,7 +74,7 @@ Name of a service or service list to add or remove inbound access to. The servic
     port: '443/tcp'
     port: [ '443/tcp', '443/udp' ]
 
-Port or port range or a list of them to add or remove inbound access to. It needs to be in the format port=<port>[-<port>]/<protocol>.
+Port or port range or a list of them to add or remove inbound access to. It needs to be in the format ```<port>[-<port>]/<protocol>```.
 
     trust: 'eth0'
     trust: [ 'eth0', 'eth1' ]
@@ -99,12 +99,12 @@ Interface to add or remove to the interfaces that are masqueraded by MAC address
     forward_port: 'eth0;447/tcp;;1.2.3.4'
     forward_port: [ 'eth0;447/tcp;;1.2.3.4', 'eth0;448/tcp;;1.2.3.5' ]
 
-Add or remove port forwarding for ports or port ranges over an interface. It needs to be in the format <interface>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>].
+Add or remove port forwarding for ports or port ranges over an interface. It needs to be in the format ```<interface>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>]```.
 
     forward_port_by_mac: '00:11:22:33:44:55;447/tcp;;1.2.3.4'
     forward_port_by_mac: [ '00:11:22:33:44:55;447/tcp;;1.2.3.4', '00:11:22:33:44:56;447/tcp;;1.2.3.4' ]
 
-"Add or remove port forwarding for ports or port ranges over an interface itentified ba a MAC address or MAC address list. It needs to be in the format <mac-addr>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>]. Each MAC address will automatically be mapped to the interface that is using this MAC address.
+"Add or remove port forwarding for ports or port ranges over an interface itentified ba a MAC address or MAC address list. It needs to be in the format ```<mac-addr>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>]```. Each MAC address will automatically be mapped to the interface that is using this MAC address.
 
     state: 'enabled' | 'disabled'
 
@@ -133,3 +133,5 @@ Enable or disable the entry.
               state: 'enabled' }
       roles:
         - ansible-role-firewall
+
+The block with several services, ports, etc. will be applied at once. If there is something wrong in the block it will fail as a whole.
