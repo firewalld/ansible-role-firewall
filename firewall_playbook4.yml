@@ -3,9 +3,9 @@
     firewall:
       - { service: [ 'tftp', 'ftp' ],
           port: [ '443/tcp', '443/udp' ],
-	  trust: [ 'foo', 'bar' ],
-	  masq: [ 'foo2', 'bar2' ],
-	  forward_port: [ 'eth0;447/tcp;;1.2.3.4', 'eth0;448/tcp;;1.2.3.5' ],
+          trust: [ 'foo', 'bar' ],
+          masq: [ 'foo2', 'bar2' ],
+          forward_port: [ 'eth0;447/tcp;;1.2.3.4', 'eth0;448/tcp;;1.2.3.5' ],
           state: 'disabled' }
       - { trust_by_mac: "00:11:22:33:44:55", state: 'disabled' }
       - { masq_by_mac: [ "11:22:33:44:55:66", "11:22:33:44:55:67", ],
