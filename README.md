@@ -5,7 +5,7 @@ This role configures the firewall on RHEL-6 and RHEL-7 machines using the
 default firewall system.
 
 For the configuration the role tries to use the firewalld client interface
-which is available in RHEL-7. If this failes it tries to use the
+which is available in RHEL-7. If this fails it tries to use the
 system-config-firewall interface which is available in RHEL-6 and in RHEL-7
 as an alternative.
 
@@ -16,11 +16,11 @@ Limitations
 
 The configuration of the firewall could limit access to the machine over the
 network. Therefore it is needed to make sure that the SSH port is still
-accessible for the ansible server.
+accessible for the Ansible server.
 
 ### Using MAC addresses
 
-As MAC addresses can no be used in netfilter to identify interfaces, this
+As MAC addresses can not be used in netfilter to identify interfaces, this
 role is doing a mapping from the MAC addresses to interfaces for netfilter.
 The network needs to be configured before the firewall to be able to get the
 mapping to interfaces.
@@ -34,13 +34,13 @@ automatically if NetworkManager is controlling the affected interface.
 ### The Error Case
 
 If the configuration failed or if the firwall configuration limits access to
-the machine in a bad way, it is most likely be needed to get physical access
+the machine in a bad way, it is most likely needed to get physical access
 to the machine to fix the issue.
 
 ### Rule sorting
 
 If you want to add forwarding rules to an interface that also is masqueraded,
-then the masquerading rules needs to be sorted before the forwarding rule.
+then the masquerading rules need to be sorted before the forwarding rule.
 
 
 Usage
@@ -84,7 +84,7 @@ Interface to add or remove to the trusted interfaces.
     trust_by_mac: "00:11:22:33:44:55"
     trust_by_mac: [ "00:11:22:33:44:55", "00:11:22:33:44:56" ]
 
-Interface to add or remove to the trusted interfaces by MAC address or MAC address list. Each MAC address will automatically be mapped to the interface that is using this MAC address.
+Interface to add or remove to the trusted interfaces by MAC address or MAC address list. Each MAC address will be automatically mapped to the interface that is using this MAC address.
 
     masq: 'eth2'
     masq: [ 'eth2', 'eth3' ]
@@ -94,7 +94,7 @@ Interface to add or remove to the interfaces that are masqueraded.
     masq_by_mac: "11:22:33:44:55:66"
     masq_by_mac: [ "11:22:33:44:55:66", "11:22:33:44:55:67", ]
 
-Interface to add or remove to the interfaces that are masqueraded by MAC address or MAC address list. Each MAC address will automatically be mapped to the interface that is using this MAC address.
+Interface to add or remove to the interfaces that are masqueraded by MAC address or MAC address list. Each MAC address will be automatically mapped to the interface that is using this MAC address.
 
     forward_port: 'eth0;447/tcp;;1.2.3.4'
     forward_port: [ 'eth0;447/tcp;;1.2.3.4', 'eth0;448/tcp;;1.2.3.5' ]
@@ -104,7 +104,7 @@ Add or remove port forwarding for ports or port ranges over an interface. It nee
     forward_port_by_mac: '00:11:22:33:44:55;447/tcp;;1.2.3.4'
     forward_port_by_mac: [ '00:11:22:33:44:55;447/tcp;;1.2.3.4', '00:11:22:33:44:56;447/tcp;;1.2.3.4' ]
 
-"Add or remove port forwarding for ports or port ranges over an interface itentified ba a MAC address or MAC address list. It needs to be in the format ```<mac-addr>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>]```. Each MAC address will automatically be mapped to the interface that is using this MAC address.
+"Add or remove port forwarding for ports or port ranges over an interface itentified ba a MAC address or MAC address list. It needs to be in the format ```<mac-addr>;<port>[-<port>]/<protocol>;[<to-port>];[<to-addr>]```. Each MAC address will be automatically mapped to the interface that is using this MAC address.
 
     state: 'enabled' | 'disabled'
 
